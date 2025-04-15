@@ -14,11 +14,13 @@
         to your account
       </p>
 
+      <form @submit.prevent="submit">
         <div class="mt-8">
           <label for="" class="text-zinc-300 text-sm block mb-0.5"
           >Email Address</label
           >
           <input
+              v-model="email"
               placeholder="you@example.com"
               type="email"
               class="block w-full bg-[#27272A] border border-[#3F3F46] rounded text-white px-4 py-2 placeholder:text-zinc-500 text-sm"
@@ -30,6 +32,7 @@
           >Password</label
           >
           <input
+              v-model="password"
               placeholder="****************"
               type="password"
               class="block w-full bg-[#27272A] border border-[#3F3F46] rounded text-white px-4 py-2 placeholder:text-zinc-500 text-sm"
@@ -46,6 +49,7 @@
           </button>
         </div>
         <!-- /sign up button -->
+      </form>
     </div>
     <!-- /sidebar -->
     <!-- note introduction -->
@@ -54,5 +58,19 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
+
+const email = ref('')
+const password = ref('')
+
+async function submit() {
+    const response = await $fetch('/api/user', {
+      method: 'POST',
+      body: {
+        email: email.value,
+        password: password.value,
+      },
+    })
+  console.log('grr',response)
+}
 </script>
