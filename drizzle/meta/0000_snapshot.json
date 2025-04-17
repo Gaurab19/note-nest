@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "d4e62430-b171-4d17-9f64-e78c1a0ccdca",
+  "id": "1b907a7c-5205-4b0f-ab5c-8f1d6d3a0933",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "users_table": {
@@ -23,6 +23,13 @@
         },
         "password": {
           "name": "password",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "salt": {
+          "name": "salt",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true,
