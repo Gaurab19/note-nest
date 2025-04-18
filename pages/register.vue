@@ -59,7 +59,7 @@
 </template>
 
 <script setup>
-
+import { toast } from 'vue3-toastify';
 const email = ref('')
 const password = ref('')
 
@@ -73,7 +73,11 @@ async function submit() {
       },
     })
   }catch (e){
-    console.warn('grr',e.response?._data.message)
+    // useNuxtApp().$toast.info('Hello World.\n I am <b>Tom</b>', {
+    //   autoClose: 5000,
+    //   dangerouslyHTMLString: true,
+    // });
+    toast.error(e.response?._data.message, { autoClose: 5000 });
   }
 
 }
