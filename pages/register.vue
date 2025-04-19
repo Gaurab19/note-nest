@@ -2,14 +2,15 @@
   <div class="flex bg-black h-screen">
     <!-- sidebar -->
     <div class="bg-zinc-900 w-[516px] p-12 flex flex-col justify-center">
-      <Logo />
+      <Logo/>
       <h1 class="text-white font-bold text-lg mt-8">
         Sign up for a free account
       </h1>
       <p class="text-zinc-300 text-sm mt-0.5">
         Already registered?
         <nuxt-link to="/login" class="font-bold text-[#FFAC00] underline"
-        >Log in</nuxt-link
+        >Log in
+        </nuxt-link
         >
         to your account
       </p>
@@ -19,12 +20,8 @@
           <label for="" class="text-zinc-300 text-sm block mb-0.5"
           >Email Address</label
           >
-          <input
-              v-model="email"
-              placeholder="you@example.com"
-              type="email"
-              class="block w-full bg-[#27272A] border border-[#3F3F46] rounded text-white px-4 py-2 placeholder:text-zinc-500 text-sm"
-          />
+          <UInput v-model="email" trailing-icon="i-lucide-at-sign" placeholder="you@example.com" size="md"
+                  class="w-full text-white text-sm"/>
           <ValidationMessage
           >{{ v$.email?.$errors[0]?.$message }}
           </ValidationMessage>
@@ -34,12 +31,26 @@
           <label for="" class="text-zinc-300 text-sm block mb-0.5"
           >Password</label
           >
-          <input
+          <UInput
               v-model="password"
               placeholder="****************"
-              type="password"
-              class="block w-full bg-[#27272A] border border-[#3F3F46] rounded text-white px-4 py-2 placeholder:text-zinc-500 text-sm"
-          />
+              :type="show ? 'text' : 'password'"
+              :ui="{ trailing: 'pe-1' }"
+              class="w-full text-white text-sm"
+          >
+            <template #trailing>
+              <UButton
+                  color="neutral"
+                  variant="link"
+                  size="sm"
+                  :icon="show ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                  :aria-label="show ? 'Hide password' : 'Show password'"
+                  :aria-pressed="show"
+                  aria-controls="password"
+                  @click="show = !show"
+              />
+            </template>
+          </UInput>
           <ValidationMessage
           >{{ v$.password?.$errors[0]?.$message }}
           </ValidationMessage>
@@ -51,7 +62,7 @@
               class="w-full mt-4 bg-[#FFAC00] rounded-full px-4 py-2 text-sm font-bold flex justify-center items-center space-x-2 cursor-pointer"
           >
             <span>Sign Up</span>
-            <ArrowRight />
+            <ArrowRight/>
           </button>
         </div>
         <!-- /sign up button -->
@@ -72,11 +83,13 @@
 </template>
 
 <script setup lang="ts">
-import { toast } from 'vue3-toastify';
-import { useVuelidate } from '@vuelidate/core'
-import { helpers,required, minLength,email as emailValidator } from '@vuelidate/validators'
+import {toast} from 'vue3-toastify';
+import {useVuelidate} from '@vuelidate/core'
+import {helpers, required, minLength, email as emailValidator} from '@vuelidate/validators'
+
 const email = ref('')
 const password = ref('')
+const show = ref(false)
 
 const rules = ref({
   email: {
@@ -90,10 +103,11 @@ const rules = ref({
     $autodirty: true,
   }
 });
-const v$ = useVuelidate(rules, { email,password })
+const v$ = useVuelidate(rules, {email, password})
+
 async function submit() {
   v$.value.$validate();
-  if(v$.value.$errors.length==0) {
+  if (v$.value.$errors.length == 0) {
     try {
       const response = await $fetch('/api/user', {
         method: 'POST',
@@ -101,7 +115,11 @@ async function submit() {
           email: email.value,
           password: password.value,
         },
-      })
+      }).then((res) => {
+        if (res.succeeded) {
+          toast.success('User Created Successfully!', {autoClose: 5000});
+        }
+      });
     } catch (e) {
       // useNuxtApp().$toast.info('Hello World.\n I am <b>Tom</b>', {
       //   autoClose: 5000,

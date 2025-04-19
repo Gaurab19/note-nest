@@ -40,14 +40,11 @@ export default defineEventHandler(async (event) => {
             password: passwordHash,
             salt: salt
         }).$returningId();
-        console.log('Added user: ', newUser);
 
-        const users = await db.select().from(usersTable);
-        console.log('Getting all users from the database: ', users);
-
-        return {data: users};
+        //const users = await db.select().from(usersTable);
+        //console.log('Getting all users from the database: ', users);
+        return {data: newUser,succeeded:true};
     }catch (e){
-        console.log('grr',e.code,e)
         if(e.code=='ER_DUP_ENTRY'){
             throw createError({ statusCode: 409, statusMessage: 'An email with this address already exists!' })
         }
