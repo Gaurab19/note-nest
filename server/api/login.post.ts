@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import {drizzle} from 'drizzle-orm/mysql2';
+import { eq } from 'drizzle-orm'
 import {usersTable} from '../db/schema';
 import bcrypt from 'bcryptjs';
 import validator from 'validator';
@@ -30,26 +31,28 @@ export default defineEventHandler(async (event) => {
                 message: 'Password must be at least 8 characters long!',
             })
         }
-        const salt = await bcrypt.genSalt(10);
-        const passwordHash = await bcrypt.hash(body.password, salt);
-
         //sends to database
-        const newUser = await db.insert(usersTable).values({
-            email: body.email,
-            password: passwordHash,
-            salt: salt
-        }).$returningId();
-        const token = jwt.sign({id: newUser}, process.env.JWT_SECRET)
-        setCookie(event,'NoteNestJWT',token)
-        //const users = await db.select().from(usersTable);
-        //console.log('Getting all users from the database: ', users);
-        return {data: newUser, succeeded: true};
+        const [user] = await db
+            .select()
+            .from(usersTable)
+            .where(eq(usersTable.email, body.email))
+
+        const isValid = await bcrypt.compare(body.password, user.password)
+        if (!isValid) {
+            throw createError({
+                statusCode: 401,
+                message: 'Invalid email or password!',
+            })
+        }
+        const token = jwt.sign({id: user.id}, process.env.JWT_SECRET)
+        setCookie(event, 'NoteNestJWT', token)
+        return {data: user.id, succeeded: true};
     } catch (e) {
         if (e.code == 'ER_DUP_ENTRY') {
             throw createError({statusCode: 409, statusMessage: 'An email with this address already exists!'})
         }
         throw createError({
-            statusCode: 400,
+            statusCode: e?.statusCode,
             message: e?.message,
         })
     }

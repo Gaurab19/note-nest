@@ -1,18 +1,16 @@
 <template>
-  <div class="flex bg-black h-screen">
+  <div class="flex bg-zinc-900 h-screen">
     <!-- sidebar -->
-    <div class="bg-zinc-900 w-[516px] p-12 flex flex-col justify-center">
+    <div class="bg-black w-[516px] p-12 flex flex-col justify-center">
       <Logo/>
-      <h1 class="text-white font-bold text-lg mt-8">
-        Sign up for a free account
-      </h1>
+      <h1 class="text-white font-bold text-lg mt-8">Log in to your account</h1>
       <p class="text-zinc-300 text-sm mt-0.5">
-        Already registered?
-        <nuxt-link to="/login" class="font-bold text-[#FFAC00] underline"
-        >Log in
+        Don't have an account?
+        <nuxt-link to="/register" class="font-bold text-[#FFAC00] underline"
+        >Sign Up
         </nuxt-link
         >
-        to your account
+        for one.
       </p>
 
       <form @submit.prevent="submit">
@@ -58,26 +56,22 @@
 
         <!-- sign up button -->
         <div>
-          <button
-              class="w-full mt-4 bg-[#FFAC00] rounded-full px-4 py-2 text-sm font-bold flex justify-center items-center space-x-2 cursor-pointer"
+          <UButton
+              trailing-icon="i-lucide-arrow-right"
+              class="w-full cursor-pointer mt-4 bg-[#FFAC00] hover:bg-[#FFAC00] rounded-full px-4 py-2 text-sm font-bold flex justify-center items-center space-x-2"
+              :loading="loading"
+              :disabled="loadg"
+              type="submit"
           >
-            <span>Sign Up</span>
-            <ArrowRight/>
-          </button>
+          Sign In
+          </UButton>
         </div>
         <!-- /sign up button -->
       </form>
     </div>
     <!-- /sidebar -->
     <!-- note introduction -->
-    <div class="flex-1 bg-zinc-800 flex items-center justify-center">
-      <div class="max-w-lg p-8">
-        <h2 class="text-white text-2xl font-bold">Welcome to NoteNest</h2>
-        <p class="text-zinc-300 mt-4">
-          Create an account to start using our Note's service and unlock all features.
-        </p>
-      </div>
-    </div>
+    <div></div>
     <!-- /note introduction -->
   </div>
 </template>
@@ -86,10 +80,10 @@
 import {toast} from 'vue3-toastify';
 import {useVuelidate} from '@vuelidate/core'
 import {helpers, required, minLength, email as emailValidator} from '@vuelidate/validators'
-
 const email = ref('')
 const password = ref('')
 const show = ref(false)
+const loading=ref(false);
 
 const rules = ref({
   email: {
@@ -109,7 +103,8 @@ async function submit() {
   v$.value.$validate();
   if (v$.value.$errors.length == 0) {
     try {
-      const response = await $fetch('/api/user', {
+      loading.value=true
+      const response = await $fetch('/api/login', {
         method: 'POST',
         body: {
           email: email.value,
@@ -117,7 +112,8 @@ async function submit() {
         },
       }).then((res) => {
         if (res.succeeded) {
-          toast.success('User Created Successfully!', {multiple:false,autoClose: 2000,onClose: () =>navigateTo('/')});
+          loading.value=false
+          toast.success('Logged In Successfully!', {multiple:false,autoClose: 1500,onClose: () =>navigateTo('/')});
         }
       });
     } catch (e) {
@@ -125,6 +121,7 @@ async function submit() {
       //   autoClose: 5000,
       //   dangerouslyHTMLString: true,
       // });
+      loading.value=false;
       toast.error(e.response?._data.message, {autoClose: 5000});
     }
   }
