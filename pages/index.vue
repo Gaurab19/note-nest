@@ -1,156 +1,243 @@
 <template>
-  <div class="flex bg-zinc-900 h-screen text-white overflow-hidden">
-    <!-- Sidebar -->
-    <aside class="bg-black w-64 p-6 flex flex-col border-r border-zinc-800">
-      <!-- Logo -->
-      <div class="flex items-center space-x-2 mb-8">
-        <Icon name="lucide:pencil" class="text-amber-500" size="20" />
-        <span class="text-white font-bold text-xl">Note<span class="text-amber-500">Nest</span></span>
+  <div class="flex bg-zinc-900 h-screen">
+    <!-- Improved Sidebar with Title and Preview -->
+    <div class="bg-zinc-800 w-72 border-r border-zinc-700 flex flex-col overflow-auto">
+      <div class="p-4 border-b border-zinc-700">
+        <Logo class="h-8 w-auto" />
       </div>
 
-      <!-- Create Note Button -->
-      <button class="text-sm text-zinc-400 hover:text-white flex items-center space-x-2 mb-8">
-        <Icon name="lucide:plus" size="16" />
-        <span>Create Note</span>
-      </button>
+      <!-- Dynamic date-based sections -->
+      <div class="flex-grow px-2 py-4 space-y-4 overflow-auto">
+        <div v-for="(noteGroup, groupTitle) in groupedNotes" :key="groupTitle" class="mb-4">
+          <p class="text-xs font-medium text-zinc-400 px-2 mb-2">{{ groupTitle }}</p>
 
-      <!-- Notes Lists -->
-      <div class="text-sm space-y-8 overflow-y-auto pr-2 flex-1">
-        <!-- Today's Notes -->
-        <div>
-          <p class="text-xs text-zinc-500 uppercase tracking-wide mb-3">Today</p>
-          <div class="space-y-2">
+          <div class="space-y-1">
             <div
-                v-for="(note, index) in notes"
+                v-for="note in noteGroup"
                 :key="note.id"
-                @click="activeNote = index"
-                :class="[
-                'px-4 py-3 rounded-lg cursor-pointer',
-                activeNote === index ? 'bg-amber-500 text-black font-semibold' : 'text-zinc-300 hover:bg-zinc-800'
-              ]"
+                class="px-3 py-2 rounded-md cursor-pointer transition-colors duration-150"
+                :class="{
+                'bg-amber-600': selectedNoteId === note.id,
+                'hover:bg-zinc-700': selectedNoteId !== note.id,
+              }"
+                @click="selectNote(note.id)"
             >
-              <p class="truncate">{{ note.title }}</p>
-              <p class="text-xs">{{ note.preview }}</p>
-            </div>
-          </div>
-        </div>
+              <!-- Note Title -->
+              <h3 class="text-sm font-medium text-white truncate">
+                {{ note.title }}
+              </h3>
+              <!-- Timestamp -->
+              <div class="text-xs text-white mt-1 flex items-center">
+                {{ formatTime(note.updatedAt) }}
+              </div>
+              <!-- Note Preview -->
+              <p class="text-xs text-white truncate mt-1">
+                {{ note.text.substring(0,60) }}
+              </p>
 
-        <!-- Yesterday's Notes -->
-        <div>
-          <p class="text-xs text-zinc-500 uppercase tracking-wide mb-3">Yesterday</p>
-          <div class="space-y-2">
-            <div
-                v-for="note in yesterdayNotes"
-                :key="note.id"
-                class="px-4 py-3 rounded-lg cursor-pointer text-zinc-300 hover:bg-zinc-800"
-            >
-              <p class="font-medium truncate">{{ note.title }}</p>
-              <p class="text-xs text-zinc-400">{{ note.preview }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Previous 30 Days -->
-        <div>
-          <p class="text-xs text-zinc-500 uppercase tracking-wide mb-3">Previous 30 Days</p>
-          <div class="space-y-2">
-            <div
-                v-for="note in olderNotes"
-                :key="note.id"
-                class="px-4 py-3 rounded-lg cursor-pointer text-zinc-300 hover:bg-zinc-800"
-            >
-              <p class="font-medium truncate">{{ note.title }}</p>
-              <p class="text-xs text-zinc-400">{{ note.preview }}</p>
             </div>
           </div>
         </div>
       </div>
-    </aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 p-12 overflow-y-auto">
-      <div class="flex justify-between items-center mb-6">
-        <p class="text-zinc-400 text-sm">{{ notes[activeNote].date }}</p>
-        <button class="p-2 text-zinc-400 hover:text-red-500 transition-colors">
-          <Icon name="lucide:trash-2" size="20" />
+      <!-- Add button -->
+      <div class="p-3 border-t border-zinc-700">
+        <button
+            class="w-full flex items-center justify-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-md p-2 text-sm transition-colors"
+            @click="createNewNote"
+        >
+          <PencilIcon class="h-4 w-4" />
+          <span>New Note</span>
         </button>
       </div>
-      <article class="space-y-6 text-zinc-100 text-lg leading-relaxed max-w-3xl">
-        <p>{{ notes[activeNote].content }}</p>
-      </article>
-    </main>
+    </div>
+
+    <!-- Note Editor Area -->
+    <div class="flex-1 flex flex-col">
+      <div class="p-4 border-b border-zinc-700 flex justify-between items-center">
+        <!-- Title input field -->
+        <input
+            v-if="isEditing"
+            v-model="editedNoteTitle"
+            class="flex-1 bg-zinc-800 text-white px-3 py-2 rounded-md border border-zinc-700 focus:border-amber-600 focus:outline-none mr-4"
+            placeholder="Note title"
+        />
+        <div v-else class="flex-1"></div>
+
+        <!-- Action buttons -->
+        <div class="flex space-x-3">
+          <button
+              v-if="isCreatingNewNote"
+              class="text-green-500 hover:text-green-400 transition-colors"
+              @click="saveNewNote"
+          >
+          </button>
+          <button
+              v-if="selectedNoteId && !isCreatingNewNote"
+              class="text-zinc-400 hover:text-red-500 transition-colors"
+          >
+            <TrashIcon class="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      <div class="flex-1 p-4">
+        <textarea
+            v-if="isEditing"
+            v-model="editedNoteText"
+            class="w-full h-full p-4 bg-zinc-900 text-white border border-zinc-700 rounded-md focus:border-amber-600 focus:outline-none resize-none"
+            placeholder="Write your note here..."
+            @input="handleNoteChange"
+        ></textarea>
+        <div v-else class="flex items-center justify-center h-full text-zinc-500">
+          Select a note or create a new one
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
+const notes = ref([])
+const selectedNoteId = ref(null)
+const editedNoteText = ref('')
+const editedNoteTitle = ref('')
+const isCreatingNewNote = ref(false)
+const isEditing = computed(() => {
+  return selectedNoteId.value !== null || isCreatingNewNote.value
+})
+
+const groupedNotes = computed(() => {
+  const groups = {}
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  notes.value.forEach(note => {
+    const noteDate = new Date(note.createdAt)
+    let groupTitle
+
+    if (isSameDay(noteDate, today)) {
+      groupTitle = 'Today'
+    } else if (isSameDay(noteDate, yesterday)) {
+      groupTitle = 'Yesterday'
+    } else if (isWithinDays(noteDate, today, 7)) {
+      groupTitle = 'This Week'
+    } else if (isWithinDays(noteDate, today, 30)) {
+      groupTitle = 'This Month'
+    } else {
+      groupTitle = 'Older'
+    }
+
+    if (!groups[groupTitle]) {
+      groups[groupTitle] = []
+    }
+    groups[groupTitle].push(note)
+  })
+
+  return groups
+})
+
+
+// Handle creating a new note
+const createNewNote = () => {
+  isCreatingNewNote.value = true
+  selectedNoteId.value = null
+  editedNoteText.value = ''
+  editedNoteTitle.value = ''
+}
+
+// Save the new note
+const saveNewNote = async () => {
+  if (editedNoteText.value.trim() === '') return
+
+  try {
+    // Here you would normally make an API call to save the note
+    // For now, we'll just simulate it with a local update
+    const newNote = {
+      id: Date.now(), // Use a timestamp as a temporary ID
+      title: editedNoteTitle.value,
+      text: editedNoteText.value,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+
+    // Add to the notes array
+    notes.value.unshift(newNote)
+
+    // Select the new note
+    selectedNoteId.value = newNote.id
+    isCreatingNewNote.value = false
+
+    // Here you would add API call:
+    // const savedNote = await $fetch('/api/notes', {
+    //   method: 'POST',
+    //   body: { title: newNote.title, text: newNote.text }
+    // })
+    // selectedNoteId.value = savedNote.id
+  } catch (error) {
+    console.error('Failed to save note:', error)
+  }
+}
+
+// Select a note
+const selectNote = (id) => {
+  isCreatingNewNote.value = false
+  selectedNoteId.value = id
+  const note = notes.value.find(note => note.id === id)
+  if (note) {
+    editedNoteText.value = note.text
+    editedNoteTitle.value = note.title || ''
+  }
+}
+
+// Handle note changes
+const handleNoteChange = () => {
+  if (selectedNoteId.value && !isCreatingNewNote.value) {
+    const noteIndex = notes.value.findIndex(note => note.id === selectedNoteId.value)
+    if (noteIndex !== -1) {
+      notes.value[noteIndex].text = editedNoteText.value
+      notes.value[noteIndex].title = editedNoteTitle.value
+      notes.value[noteIndex].updatedAt = new Date().toISOString()
+
+      // Here you would add API call to update the note:
+      // await $fetch(`/api/notes/${selectedNoteId.value}`, {
+      //   method: 'PUT',
+      //   body: {
+      //     title: editedNoteTitle.value,
+      //     text: editedNoteText.value
+      //   }
+      // })
+    }
+  }
+}
+
+// Helper functions
+function isSameDay(date1, date2) {
+  return date1.getDate() === date2.getDate() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getFullYear() === date2.getFullYear()
+}
+
+function isWithinDays(date, baseDate, days) {
+  const timeDiff = baseDate - date
+  const dayDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24))
+  return dayDiff >= 0 && dayDiff <= days
+}
+
+function formatTime(dateString) {
+  const date = new Date(dateString)
+  return date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+}
+
 definePageMeta({
-  middleware: ["auth"]
-});
+  //middleware: ['auth'],
+})
 
-const activeNote = ref(0);
-
-const notes = ref([
-  {
-    id: 1,
-    title: "Finally moved into my...",
-    preview: "Tiny house today...",
-    date: "November 22nd, 2024",
-    content: "Finally moved into my tiny house today! After months of YouTube tutorials, countless trips to Home Depot, and more scrapes and bruises than I care to count, I'm officially a tiny home dweller. The sunset streaming through my handmade stained glass window makes the whole 240 square feet glow like a jewel box."
-  },
-  {
-    id: 2,
-    title: "Just finished reading...",
-    preview: "The Midnight Library...",
-    date: "April 20th, 2025",
-    content: "Just finished reading The Midnight Library and I can't stop thinking about all the lives we could have lived."
-  },
-  {
-    id: 3,
-    title: "Today's recipe experi...",
-    preview: "Attempted grandma's...",
-    date: "April 20th, 2025",
-    content: "Today's recipe experiment was a success! Attempted grandma's secret pasta recipe and it came out delicious."
-  },
-  {
-    id: 4,
-    title: "Dear future self, when...",
-    preview: "When you read this...",
-    date: "April 20th, 2025",
-    content: "Dear future self, when you read this, remember how far you've come and be proud of your journey."
+onMounted(async () => {
+  notes.value = await $fetch('/api/notes')
+  if (notes.value.length > 0) {
+    selectNote(notes.value[0].id)
   }
-]);
-
-const yesterdayNotes = ref([
-  {
-    id: 5,
-    title: "Met someone incredible...",
-    preview: "Coffee shop...",
-    date: "April 19th, 2025",
-    content: "Met someone incredible at the coffee shop today. We talked for hours about books, travel, and life."
-  }
-]);
-
-const olderNotes = ref([
-  {
-    id: 6,
-    title: "First day at Google",
-    preview: "10/12/24 · Orientation was...",
-    date: "October 12th, 2024",
-    content: "First day at Google was overwhelming but exciting. Orientation was intense but I met some great people."
-  },
-  {
-    id: 7,
-    title: "Hiking Mt. Rainier",
-    preview: "10/3/24 · Six hours of climbing...",
-    date: "October 3rd, 2024",
-    content: "Hiking Mt. Rainier was the challenge of a lifetime. Six hours of climbing but the view was worth every step."
-  },
-  {
-    id: 8,
-    title: "Started learning violin",
-    preview: "10/1/24 · These beginner notes...",
-    date: "October 1st, 2024",
-    content: "Started learning violin today. These beginner notes are challenging but I'm determined to master them."
-  }
-]);
+})
 </script>
