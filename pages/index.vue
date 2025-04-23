@@ -113,7 +113,7 @@ const groupedNotes = computed(() => {
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
 
-  notes.value.forEach(note => {
+  notes?.value?.forEach(note => {
     const noteDate = new Date(note.createdAt)
     let groupTitle
 
@@ -231,12 +231,12 @@ function formatTime(dateString) {
 }
 
 definePageMeta({
-  //middleware: ['auth'],
+  middleware: ['auth'],
 })
 
 onMounted(async () => {
   notes.value = await $fetch('/api/notes')
-  if (notes.value.length > 0) {
+  if (notes?.value?.length > 0) {
     selectNote(notes.value[0].id)
   }
 })
