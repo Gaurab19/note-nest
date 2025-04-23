@@ -9,6 +9,7 @@ export default defineEventHandler(async (event) => {
     try {
         const cookies=parseCookies(event);
         const token=cookies.NoteNestJWT;
+
         if(!token){
             throw createError({
                 statusCode:401,

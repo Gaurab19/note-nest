@@ -1,96 +1,211 @@
 <template>
   <div class="flex bg-zinc-900 h-screen">
-    <!-- Improved Sidebar with Title and Preview -->
-    <div class="bg-zinc-800 w-72 border-r border-zinc-700 flex flex-col overflow-auto">
-      <div class="p-4 border-b border-zinc-700">
-        <Logo class="h-8 w-auto" />
+    <!-- sidebar -->
+    <div class="bg-black w-[338px] p-8 flex flex-col overflow-scroll">
+      <div>
+        <Logo />
       </div>
 
-      <!-- Dynamic date-based sections -->
-      <div class="flex-grow px-2 py-4 space-y-4 overflow-auto">
-        <div v-for="(noteGroup, groupTitle) in groupedNotes" :key="groupTitle" class="mb-4">
-          <p class="text-xs font-medium text-zinc-400 px-2 mb-2">{{ groupTitle }}</p>
-
-          <div class="space-y-1">
-            <div
-                v-for="note in noteGroup"
-                :key="note.id"
-                class="px-3 py-2 rounded-md cursor-pointer transition-colors duration-150"
-                :class="{
-                'bg-amber-600': selectedNoteId === note.id,
-                'hover:bg-zinc-700': selectedNoteId !== note.id,
-              }"
-                @click="selectNote(note.id)"
-            >
-              <!-- Note Title -->
-              <h3 class="text-sm font-medium text-white truncate">
-                {{ note.title }}
-              </h3>
-              <!-- Timestamp -->
-              <div class="text-xs text-white mt-1 flex items-center">
-                {{ formatTime(note.updatedAt) }}
-              </div>
-              <!-- Note Preview -->
-              <p class="text-xs text-white truncate mt-1">
-                {{ note.text.substring(0,60) }}
-              </p>
-
+      <!-- today main container -->
+      <div class="flex-grow">
+        <p class="text-xs font-bold text-[#C2C2C5] mt-12 mb-4">Today</p>
+        <div class="ml-2 space-y-2">
+          <div
+              v-for="note in todaysNotes"
+              class="p-2 rounded-lg cursor-pointer"
+              :class="{
+              'bg-[#A1842C]': note.id === selectedNote.id,
+              'hover:bg-[#A1842C]/50': note.id !== selectedNote.id,
+            }"
+              @click="setNote(note)"
+          >
+            <h3 class="text-sm font-bold text-[#F4F4F5] truncate">
+              {{ note.title || note.text.substring(0, 50) }}
+            </h3>
+            <div class="leading-none truncate text-[#D6D6D6]">
+              <span class="text-xs text-[#F4F4F5] mr-4">{{
+                  new Date(note.updatedAt).toLocaleDateString()
+                }}</span>
+              <span v-if="note.text.length > 50" class="text-xs text-[#D6D6D6]"
+              >... {{ note.text.substring(50, 100) }}</span
+              >
             </div>
           </div>
         </div>
       </div>
+      <!-- /today main container -->
 
-      <!-- Add button -->
-      <div class="p-3 border-t border-zinc-700">
-        <button
-            class="w-full flex items-center justify-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-md p-2 text-sm transition-colors"
-            @click="createNewNote"
-        >
-          <PencilIcon class="h-4 w-4" />
-          <span>New Note</span>
-        </button>
+      <!-- yesterday main container -->
+      <div>
+        <p class="text-xs font-bold text-[#C2C2C5] mt-12 mb-4">Yesterday</p>
+        <div class="ml-2 space-y-2">
+          <div
+              v-for="note in yesterdaysNotes"
+              class="p-2 rounded-lg cursor-pointer"
+              :class="{
+              'bg-[#A1842C]': note.id === selectedNote.id,
+              'hover:bg-[#A1842C]/50': note.id !== selectedNote.id,
+            }"
+              @click="setNote(note)"
+          >
+            <h3 class="text-sm font-bold text-[#F4F4F5] truncate">
+              {{ note.title || note.text.substring(0, 50) }}
+            </h3>
+            <div class="leading-none truncate text-[#D6D6D6]">
+              <span class="text-xs text-[#F4F4F5] mr-4">{{
+                  new Date(note.updatedAt).toDateString() ===
+                  new Date().toDateString()
+                      ? 'Today'
+                      : new Date(note.updatedAt).toLocaleDateString()
+                }}</span>
+              <span v-if="note.text.length > 50" class="text-xs text-[#D6D6D6]"
+              >... {{ note.text.substring(50, 100) }}</span
+              >
+            </div>
+          </div>
+        </div>
       </div>
+      <!-- /yesterday main container -->
+
+      <!-- everything else main container -->
+      <div>
+        <p class="text-xs font-bold text-[#C2C2C5] mt-12 mb-4">Earlier</p>
+        <div class="ml-2 space-y-2">
+          <div
+              v-for="note in earlierNotes"
+              class="p-2 rounded-lg cursor-pointer"
+              :class="{
+              'bg-[#A1842C]': note.id === selectedNote.id,
+              'hover:bg-[#A1842C]/50': note.id !== selectedNote.id,
+            }"
+              @click="setNote(note)"
+          >
+            <h3 class="text-sm font-bold text-[#F4F4F5] truncate">
+              {{ note.title || note.text.substring(0, 50) }}
+            </h3>
+            <div class="leading-none truncate text-[#D6D6D6]">
+              <span class="text-xs text-[#F4F4F5] mr-4">{{
+                  new Date(note.updatedAt).toDateString() ===
+                  new Date().toDateString()
+                      ? 'Today'
+                      : new Date(note.updatedAt).toLocaleDateString()
+                }}</span>
+              <span v-if="note.text.length > 50" class="text-xs text-[#D6D6D6]"
+              >... {{ note.text.substring(50, 100) }}</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- /everything else main container -->
     </div>
+    <!-- /sidebar -->
 
-    <!-- Note Editor Area -->
-    <div class="flex-1 flex flex-col">
-      <div class="p-4 border-b border-zinc-700 flex justify-between items-center">
-        <!-- Title input field -->
-        <input
-            v-if="isEditing"
-            v-model="editedNoteTitle"
-            class="flex-1 bg-zinc-800 text-white px-3 py-2 rounded-md border border-zinc-700 focus:border-amber-600 focus:outline-none mr-4"
-            placeholder="Note title"
-        />
-        <div v-else class="flex-1"></div>
+    <!-- note container -->
+    <div class="w-full flex flex-col">
+      <div class="flex justify-between w-full items-start p-8">
+        <button
+            class="inline-flex items-center text-xs text-[#C2C2C5] hover:text-white font-bold space-x-2"
+            @click="openNewNoteModal"
+        >
+          <PencilIcon />
+          <span>Create Note</span>
+        </button>
 
-        <!-- Action buttons -->
-        <div class="flex space-x-3">
+        <div class="flex space-x-4">
           <button
-              v-if="isCreatingNewNote"
-              class="text-green-500 hover:text-green-400 transition-colors"
-              @click="saveNewNote"
+              v-if="selectedNote.id"
+              class="inline-flex items-center text-xs text-[#C2C2C5] hover:text-white font-bold space-x-2"
+              @click="openEditNoteModal"
           >
+            <PencilIcon />
+            <span>Edit Note</span>
           </button>
-          <button
-              v-if="selectedNoteId && !isCreatingNewNote"
-              class="text-zinc-400 hover:text-red-500 transition-colors"
-          >
-            <TrashIcon class="h-5 w-5" />
+          <button>
+            <TrashIcon
+                class="text-[#6D6D73] hover:text-white"
+                @click="deleteNote"
+            />
           </button>
         </div>
       </div>
 
-      <div class="flex-1 p-4">
+      <div v-if="selectedNote.id" class="max-w-[437px] mx-auto w-full flex-grow flex flex-col">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-bold text-white mb-2">{{ selectedNote.title || 'Untitled Note' }}</h2>
+          <p class="text-[#929292] font-playfair">
+            {{ new Date(selectedNote.updatedAt).toLocaleDateString() }}
+          </p>
+        </div>
         <textarea
-            v-if="isEditing"
-            v-model="editedNoteText"
-            class="w-full h-full p-4 bg-zinc-900 text-white border border-zinc-700 rounded-md focus:border-amber-600 focus:outline-none resize-none"
-            placeholder="Write your note here..."
-            @input="handleNoteChange"
-        ></textarea>
-        <div v-else class="flex items-center justify-center h-full text-zinc-500">
-          Select a note or create a new one
+            ref="textarea"
+            v-model="updatedNote"
+            name="note"
+            id="note"
+            class="text-[#D4D4D4] my-4 font-playfair w-full bg-transparent focus:outline-none resize-none flex-grow"
+            @input="
+            () => {
+              debouncedFn()
+              selectedNote.text = updatedNote
+            }
+          "
+        >
+        </textarea>
+      </div>
+      <div v-else class="flex-grow flex items-center justify-center">
+        <p class="text-zinc-500">Select a note or create a new one</p>
+      </div>
+
+      <button
+          class="text-zinc-400 hover:text-white text-sm font-bold absolute right-0 bottom-0 p-8"
+          @click="logout"
+      >
+        Logout
+      </button>
+    </div>
+    <!-- /note container -->
+
+    <!-- Note Modal -->
+    <div v-if="showNoteModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+      <div class="bg-zinc-800 rounded-lg p-6 w-full max-w-md">
+        <h2 class="text-white text-xl font-bold mb-4">{{ isEditMode ? 'Edit Note' : 'Create New Note' }}</h2>
+
+        <div class="mb-4">
+          <label for="noteTitle" class="block text-sm font-medium text-zinc-400 mb-1">Title</label>
+          <input
+              type="text"
+              id="noteTitle"
+              v-model="noteFormData.title"
+              class="w-full p-2 bg-zinc-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#A1842C]"
+              placeholder="Enter note title"
+          >
+        </div>
+
+        <div class="mb-6">
+          <label for="noteContent" class="block text-sm font-medium text-zinc-400 mb-1">Content</label>
+          <textarea
+              id="noteContent"
+              v-model="noteFormData.content"
+              class="w-full p-2 bg-zinc-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#A1842C] min-h-32"
+              placeholder="Enter note content"
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end space-x-3">
+          <button
+              @click="closeNoteModal"
+              class="px-4 py-2 text-zinc-300 hover:text-white"
+          >
+            Cancel
+          </button>
+          <button
+              @click="saveNote"
+              class="px-4 py-2 bg-[#A1842C] text-white rounded-md hover:bg-[#8C7021]"
+              :disabled="isLoading"
+          >
+            <span v-if="isLoading">Saving...</span>
+            <span v-else>{{ isEditMode ? 'Update Note' : 'Save Note' }}</span>
+          </button>
         </div>
       </div>
     </div>
@@ -98,146 +213,215 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
+import {toast} from "vue3-toastify";
+
+const updatedNote = ref('')
 const notes = ref([])
-const selectedNoteId = ref(null)
-const editedNoteText = ref('')
-const editedNoteTitle = ref('')
-const isCreatingNewNote = ref(false)
-const isEditing = computed(() => {
-  return selectedNoteId.value !== null || isCreatingNewNote.value
+const selectedNote = ref({})
+const textarea = ref(null)
+const isLoading = ref(false)
+
+// Combined modal control variables
+const showNoteModal = ref(false)
+const isEditMode = ref(false)
+const noteFormData = ref({
+  title: '',
+  content: ''
 })
-
-const groupedNotes = computed(() => {
-  const groups = {}
-  const today = new Date()
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-
-  notes?.value?.forEach(note => {
-    const noteDate = new Date(note.createdAt)
-    let groupTitle
-
-    if (isSameDay(noteDate, today)) {
-      groupTitle = 'Today'
-    } else if (isSameDay(noteDate, yesterday)) {
-      groupTitle = 'Yesterday'
-    } else if (isWithinDays(noteDate, today, 7)) {
-      groupTitle = 'This Week'
-    } else if (isWithinDays(noteDate, today, 30)) {
-      groupTitle = 'This Month'
-    } else {
-      groupTitle = 'Older'
-    }
-
-    if (!groups[groupTitle]) {
-      groups[groupTitle] = []
-    }
-    groups[groupTitle].push(note)
-  })
-
-  return groups
-})
-
-
-// Handle creating a new note
-const createNewNote = () => {
-  isCreatingNewNote.value = true
-  selectedNoteId.value = null
-  editedNoteText.value = ''
-  editedNoteTitle.value = ''
-}
-
-// Save the new note
-const saveNewNote = async () => {
-  if (editedNoteText.value.trim() === '') return
-
-  try {
-    // Here you would normally make an API call to save the note
-    // For now, we'll just simulate it with a local update
-    const newNote = {
-      id: Date.now(), // Use a timestamp as a temporary ID
-      title: editedNoteTitle.value,
-      text: editedNoteText.value,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-
-    // Add to the notes array
-    notes.value.unshift(newNote)
-
-    // Select the new note
-    selectedNoteId.value = newNote.id
-    isCreatingNewNote.value = false
-
-    // Here you would add API call:
-    // const savedNote = await $fetch('/api/notes', {
-    //   method: 'POST',
-    //   body: { title: newNote.title, text: newNote.text }
-    // })
-    // selectedNoteId.value = savedNote.id
-  } catch (error) {
-    console.error('Failed to save note:', error)
-  }
-}
-
-// Select a note
-const selectNote = (id) => {
-  isCreatingNewNote.value = false
-  selectedNoteId.value = id
-  const note = notes.value.find(note => note.id === id)
-  if (note) {
-    editedNoteText.value = note.text
-    editedNoteTitle.value = note.title || ''
-  }
-}
-
-// Handle note changes
-const handleNoteChange = () => {
-  if (selectedNoteId.value && !isCreatingNewNote.value) {
-    const noteIndex = notes.value.findIndex(note => note.id === selectedNoteId.value)
-    if (noteIndex !== -1) {
-      notes.value[noteIndex].text = editedNoteText.value
-      notes.value[noteIndex].title = editedNoteTitle.value
-      notes.value[noteIndex].updatedAt = new Date().toISOString()
-
-      // Here you would add API call to update the note:
-      // await $fetch(`/api/notes/${selectedNoteId.value}`, {
-      //   method: 'PUT',
-      //   body: {
-      //     title: editedNoteTitle.value,
-      //     text: editedNoteText.value
-      //   }
-      // })
-    }
-  }
-}
-
-// Helper functions
-function isSameDay(date1, date2) {
-  return date1.getDate() === date2.getDate() &&
-      date1.getMonth() === date2.getMonth() &&
-      date1.getFullYear() === date2.getFullYear()
-}
-
-function isWithinDays(date, baseDate, days) {
-  const timeDiff = baseDate - date
-  const dayDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24))
-  return dayDiff >= 0 && dayDiff <= days
-}
-
-function formatTime(dateString) {
-  const date = new Date(dateString)
-  return date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
-}
 
 definePageMeta({
   middleware: ['auth'],
 })
 
+function setNote(note) {
+  selectedNote.value = note
+  updatedNote.value = note.text
+}
+
+function openNewNoteModal() {
+  isEditMode.value = false
+  noteFormData.value = {
+    title: '',
+    content: ''
+  }
+  showNoteModal.value = true
+}
+
+function openEditNoteModal() {
+  if (!selectedNote.value.id) return
+
+  isEditMode.value = true
+  noteFormData.value = {
+    title: selectedNote.value.title || '',
+    content: selectedNote.value.text || ''
+  }
+  showNoteModal.value = true
+}
+
+function closeNoteModal() {
+  showNoteModal.value = false
+}
+
+async function saveNote() {
+  isLoading.value = true
+  try {
+    if (isEditMode.value) {
+      await updateFullNote()
+    } else {
+      await createNewNoteWithData()
+    }
+
+    // Refresh the notes list from API after adding or updating
+    await refreshNotes()
+    closeNoteModal()
+  } catch (err) {
+    console.log(err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function refreshNotes() {
+  const updatedNotes = await $fetch('/api/notes')
+  notes.value = updatedNotes
+  notes.value.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+
+  // If we're in edit mode, find and select the same note
+  // Otherwise in create mode, select the first (newest) note
+  if (isEditMode.value && selectedNote.value.id) {
+    const updatedSelectedNote = notes.value.find(note => note.id === selectedNote.value.id)
+    if (updatedSelectedNote) {
+      selectedNote.value = updatedSelectedNote
+      updatedNote.value = updatedSelectedNote.text
+    }
+  } else {
+    if (notes.value.length > 0) {
+      selectedNote.value = notes.value[0]
+      updatedNote.value = selectedNote.value.text
+    }
+  }
+}
+
+async function createNewNoteWithData() {
+  try {
+    await $fetch(`/api/notes`, {
+      method: 'POST',
+      body: {
+        title: noteFormData.value.title,
+        text: noteFormData.value.content
+      }
+    })
+  } catch (err) {
+    console.log(err)
+    throw err
+  }
+}
+
+async function updateFullNote() {
+  try {
+    await $fetch(`/api/notes/${selectedNote.value.id}`, {
+      method: 'PATCH',
+      body: {
+        title: noteFormData.value.title,
+        updatedNote: noteFormData.value.content,
+      },
+    })
+  } catch (err) {
+    console.log(err)
+    throw err
+  }
+}
+
+function logout() {
+  const jwtCookie = useCookie('NoteNestJWT')
+  jwtCookie.value = null
+  navigateTo('/login')
+}
+
+async function deleteNote() {
+  if (!selectedNote.value.id) return
+    isLoading.value = true
+    try {
+      // truly delete
+      await $fetch(`/api/notes/${selectedNote.value.id}`, {
+        method: 'DELETE',
+      }).then((res)=>{
+        if(res){
+          toast.success('Deleted Successfully!', {multiple:false,autoClose: 1500});
+        }
+      })
+
+      // Refresh notes after deletion
+      await refreshNotes()
+
+      // If no notes left, clear selection
+      if (notes.value.length === 0) {
+        selectedNote.value = {}
+        updatedNote.value = ''
+      }
+    } catch (err) {
+      console.log(err)
+    } finally {
+      isLoading.value = false
+    }
+}
+
+const debouncedFn = useDebounceFn(async () => {
+  await updateNote()
+}, 1000)
+
+async function updateNote() {
+  try {
+    await $fetch(`/api/notes/${selectedNote.value.id}`, {
+      method: 'PATCH',
+      body: {
+        updatedNote: updatedNote.value,
+      },
+    })
+  } catch (err) {
+    console.log(err)
+  }
+}
+
+const todaysNotes = computed(() => {
+  return notes.value.filter((note) => {
+    const noteDate = new Date(note.updatedAt)
+    return noteDate.toDateString() === new Date().toDateString()
+  })
+})
+
+const yesterdaysNotes = computed(() => {
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  return notes.value.filter((note) => {
+    const noteDate = new Date(note.updatedAt)
+    return noteDate.toDateString() === yesterday.toDateString()
+  })
+})
+
+const earlierNotes = computed(() => {
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  return notes.value.filter((note) => {
+    const noteDate = new Date(note.updatedAt)
+    return (
+        noteDate < yesterday &&
+        noteDate.toDateString() !== yesterday.toDateString()
+    )
+  })
+})
+
 onMounted(async () => {
-  notes.value = await $fetch('/api/notes')
-  if (notes?.value?.length > 0) {
-    selectNote(notes.value[0].id)
+  await refreshNotes()
+
+  if (notes.value.length > 0) {
+    selectedNote.value = notes.value[0]
+    updatedNote.value = selectedNote.value.text
+    if (textarea.value) textarea.value.focus()
   }
 })
 </script>
